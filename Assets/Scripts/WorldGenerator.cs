@@ -6,7 +6,6 @@ public enum GeneratorType {RandomNumbers, Prefabs, PerlinNoise};
 
 public class WorldGenerator : MonoBehaviour {
     public GeneratorType generatorType;
-    public GameObject[] tilePrefabs;
     public GameObject world;
     [Range(0,100)]
     public int mapWidth;
@@ -19,8 +18,11 @@ public class WorldGenerator : MonoBehaviour {
 
     int[,,] worldData;
 
-    [Header("Random Number Variables")]
-    public float[] tileProbabilites;
+    [Header("Tile Prefabs")]
+    [Tooltip("The tilePrefab[i] has a probability of tileProbabilies[i] to appear.")]
+    public float[] tileProbabilities;
+    public GameObject[] tilePrefabs;
+
 
     [Header("From Prefab Generator Variables")]
     public PrefabGeneratorTiles[] prefabGeneratorTiles;
@@ -33,22 +35,28 @@ public class WorldGenerator : MonoBehaviour {
     [Tooltip("Lower value leads to broader Mountains")]
     [Range(0, 10)]
     public float spikyness;
-    public bool isUsingAdvancedHeight;
+    public bool isUsingSnow;
+    public GameObject snowPrefab;
     [Range(0, 25)]
     public float snowLine;
     public bool isUsingBioms;
     public bool isShowingBiomTexture;
+    public GameObject biomMap;
     [Tooltip("Bigger biom scale leads to bigger bioms")]
     [Range(0,15)]
     public float biomScale;
     public bool isUsingThreedimensionalBioms;
-    public bool isShowingThreedimensionalBiomTextures;
+    public bool isShowingThreedimensionalBiomTexture;
+    public GameObject threeDimensionalBiomMap;
     /*
     public bool isUsingClouds;
     public bool isUsingForest;
     */
 
-    Texture2D tex;
+    Texture2D heightTexture;
+    Texture2D biomTexture;
+    Texture2D threeDimensionalBiomTexture;
+
     float randomX;
     float randomY;
     float randomZ;
@@ -99,10 +107,10 @@ public class WorldGenerator : MonoBehaviour {
     private void CreateWorldFromRandomNumbers()
     {        
         float fullProbability = 0;
-        float[] combinedTileProbabilities = new float[tileProbabilites.Length];
+        float[] combinedTileProbabilities = new float[tileProbabilities.Length];
         for (int i = 0; i < tilePrefabs.Length; i++)
         {
-            fullProbability += tileProbabilites[i];
+            fullProbability += tileProbabilities[i];
             combinedTileProbabilities[i] = fullProbability;
         }
         for (int x = 0; x < mapWidth; x++)
@@ -129,7 +137,7 @@ public class WorldGenerator : MonoBehaviour {
     private void CreateWorldFromPrefabs()
     {
         float fullProbability = 0;
-        float[] combinedTileProbabilities = new float[tileProbabilites.Length];
+        float[] combinedTileProbabilities = new float[tileProbabilities.Length];
         for (int i = 0; i < prefabGeneratorTiles.Length; i++)
         {
             fullProbability += prefabGeneratorTiles[i].probability;
@@ -165,12 +173,39 @@ public class WorldGenerator : MonoBehaviour {
         }
         if (isShowingHeightMapTexture)
         {
-            tex = new Texture2D(mapWidth, mapDepth);
-            /*
+            heightTexture = new Texture2D(mapWidth, mapDepth);
+            heightMap.SetActive(true);
+            heightMap.GetComponent<Renderer>().material.mainTexture = heightTexture;
             heightMap.transform.localScale = new Vector3(mapWidth, mapDepth, 1);
-            heightMap.transform.position = new Vector3(mapWidth-1, -2, mapDepth-1) / 2;
-            heightMap.GetComponent<Renderer>().material.mainTexture = CreateTexture(mapWidth, mapDepth, 1 / spikyness, mapWidth, mapDepth);
-            */
+            heightMap.transform.position = new Vector3(mapWidth - 1, -2, mapDepth - 1) / 2;
+        }
+        else
+        {
+            heightMap.SetActive(false);
+        }
+        if (isShowingBiomTexture)
+        {
+            biomTexture = new Texture2D(mapWidth, mapDepth);
+            biomMap.SetActive(true);
+            biomMap.GetComponent<Renderer>().material.mainTexture = biomTexture;
+            biomMap.transform.localScale = new Vector3(mapWidth, mapDepth, 1);
+            biomMap.transform.position = new Vector3(mapWidth - 1, -2, mapDepth - 1) / 2;
+        }
+        else
+        {
+            biomMap.SetActive(false);
+        }
+        if (isShowingThreedimensionalBiomTexture)
+        {
+            threeDimensionalBiomTexture = new Texture2D(mapWidth, mapDepth);
+            threeDimensionalBiomMap.SetActive(true);
+            threeDimensionalBiomMap.GetComponent<Renderer>().material.mainTexture = biomTexture;
+            threeDimensionalBiomMap.transform.localScale = new Vector3(mapWidth, mapHeight, 1);
+            threeDimensionalBiomMap.transform.position = new Vector3(mapWidth - 1, mapHeight - 2, -2) / 2;
+        }
+        else
+        {
+            threeDimensionalBiomMap.SetActive(false);
         }
         for (int x = 0; x < mapWidth; x++)
         {
@@ -182,17 +217,7 @@ public class WorldGenerator : MonoBehaviour {
                 }
             }
         }
-        if (isShowingHeightMapTexture)
-        {
-            heightMap.SetActive(true);
-            heightMap.GetComponent<Renderer>().material.mainTexture = tex;
-            heightMap.transform.localScale = new Vector3(mapWidth, mapDepth, 1);
-            heightMap.transform.position = new Vector3(mapWidth - 1, -2, mapDepth - 1) / 2;
-        }
-        else
-        {
-            heightMap.SetActive(false);
-        }
+        
         StartCoroutine(populateWorld());
     }
 
@@ -209,28 +234,28 @@ public class WorldGenerator : MonoBehaviour {
             {
                 float sample = heightValue / mapHeight;
                 Color color = new Color(sample, sample, sample);
-                tex.SetPixel((int)tileX, (int)tileZ, color);
-                tex.Apply();
-            }
+                heightTexture.SetPixel((int)tileX, (int)tileZ, color);
+                heightTexture.Apply();
+            }            
             if (heightValue < tileY)
             {
                 return -1;
             }
         }
-        if (isUsingAdvancedHeight)
+        if (isUsingSnow)
         {
             if(tileY > snowLine)
             {
-                return 4;
+                return -2;
             }
         }
         if (isUsingBioms)
         {
             float fullProbability = 0;
-            float[] combinedTileProbabilities = new float[tileProbabilites.Length];
+            float[] combinedTileProbabilities = new float[tileProbabilities.Length];
             for (int i = 0; i < tilePrefabs.Length; i++)
             {
-                fullProbability += tileProbabilites[i];
+                fullProbability += tileProbabilities[i];
                 combinedTileProbabilities[i] = fullProbability;
             }
 
@@ -239,42 +264,39 @@ public class WorldGenerator : MonoBehaviour {
             float biomZ = (randomZ + tileZ / mapDepth) / biomScale * mapDepth / 25;
             for (int i = 0; i < combinedTileProbabilities.Length; i++)
             {
+                if (isShowingBiomTexture)
+                {
+                    float sample = Mathf.PerlinNoise(biomX, biomZ) / combinedTileProbabilities.Length;
+                    Color color = new Color(sample, sample, sample);
+                    biomTexture.SetPixel((int)tileX, (int)tileZ, color);
+                    biomTexture.Apply();
+                }
                 if (isUsingThreedimensionalBioms)
                 {
                     if (((Mathf.PerlinNoise(biomX, biomZ) + (Mathf.PerlinNoise(biomX, biomY)) / 2) * fullProbability) <= combinedTileProbabilities[i])
                     {
+                        if (isShowingThreedimensionalBiomTexture)
+                        {
+                            float sample = Mathf.PerlinNoise(biomX, biomY) / combinedTileProbabilities.Length;
+                            Color color = new Color(sample, sample, sample);
+                            threeDimensionalBiomTexture.SetPixel((int)tileX, (int)tileZ, color);
+                            threeDimensionalBiomTexture.Apply();
+                        }
                         return tileNumber = i;
                     }
                 }
                 else if (Mathf.PerlinNoise(biomX, biomZ) * fullProbability <= combinedTileProbabilities[i])
                 {
+                    
                     return tileNumber = i;
                 }
+                
             }
+            
         }
         return tileNumber;
     }
 
-    private Texture2D CreateTexture(float random1, float random2, float scale, int xMax, int yMax)
-    {
-        Texture2D tex = new Texture2D(xMax, yMax);
-        for (int x = 0; x < xMax; x++)
-        {
-            for (int y = 0; y < yMax; y++)
-            {
-                float sampleX = (random1 + (float)x / xMax) / scale * xMax / 25;
-                float sampleY = (random2 + (float)y / yMax) / scale * yMax / 25;
-                Mathf.Clamp(sampleX, 0, 1);
-                Mathf.Clamp(sampleY, 0, 1);
-                float sample = Mathf.PerlinNoise(sampleX, sampleY);
-                Debug.Log(sample);
-                Color color = new Color(sample, sample, sample);
-                tex.SetPixel(x, y, color);
-            }
-        }
-        tex.Apply();
-        return tex;
-    }
     private IEnumerator populateWorld()
     {
         int numberOfCreatedTiles = 0;
@@ -290,6 +312,10 @@ public class WorldGenerator : MonoBehaviour {
                         if (worldData[x, y, z] >= 0)
                         {
                             Instantiate(tilePrefabs[worldData[x, y, z]], new Vector3(x, y, z), Quaternion.identity, world.transform);
+                        }
+                        else if(worldData[x, y, z] == -2)
+                        {
+                            Instantiate(snowPrefab, new Vector3(x, y, z), Quaternion.identity, world.transform);
                         }
                     }
                     if (isRevealingTheMapSlowly)
