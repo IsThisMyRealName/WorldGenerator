@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+    <head>
+        <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; script-src * 'unsafe-inline'">
+        <meta http-equiv="X-Content-Security-Policy" content="default-src * 'unsafe-inline'; script-src * 'unsafe-inline'">
+        <meta http-equiv="X-WebKit-CSP" content="default-src * 'unsafe-inline'; script-src * 'unsafe-inline'">
+        
+        <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no' />
+        <meta charset='utf-8'>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="manifest" href="manifest.json">
+        <style></style>
+        <title>Floorplan test</title>
+        <script src="./js/playcanvas-stable.min.js"></script>
+        
+        <script>
+            ASSET_PREFIX = "";
+            SCRIPT_PREFIX = "";
+            SCENE_PATH = "613715.json";
+            CONTEXT_OPTIONS = {
+                'antialias': true,
+                'alpha': false,
+                'preserveDrawingBuffer': false,
+                'preferWebGl2': true
+            };
+            SCRIPTS = [ 12575282, 12575285, 12575306, 12575279 ];
+            CONFIG_FILENAME = "config.json";
+            pc.script.legacy = false;
+        </script>
+    </head>
+    <body>
+        <script src="./js/__start__.js"></script>
+        <script src="./js/__loading__.js"></script>
+    </body>
+</html>
